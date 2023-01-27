@@ -46,13 +46,6 @@ async function scrapeYoutubeVideo() {
     // scroll down the page a couple of times
     await scrollDown(page, 6);
 
-    // for(let i = 0; i < 7; i++) {
-    //   await page.evaluate(() => {
-    //     window.scrollBy(0, window.innerHeight);
-    //   });
-    //   sleep(2000); // wait for 2 seconds  
-    // }
-
     // get the total number of comments
     await page.waitForSelector('ytd-comments-header-renderer #title #count .count-text', {visible: true})
     let totalComments = await page.$eval('ytd-comments-header-renderer #title #count .count-text', el => {
@@ -61,14 +54,6 @@ async function scrapeYoutubeVideo() {
 
      // scroll down the page some more
      await scrollDown(page, 25);
-
-     console.log("Scrolling down the page..");
-     for(let i = 0; i < 25; i++) {
-       await page.evaluate(() => {
-         window.scrollBy(0, window.innerHeight);
-       });
-       sleep(2000); // wait for 2 seconds  
-     }
  
     // get all the comments
     console.log("Scraping all the comments...");
