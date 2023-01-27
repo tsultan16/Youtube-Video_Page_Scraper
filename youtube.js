@@ -3,7 +3,7 @@ const fs = require('fs');
 
 async function scrapeYoutubeVideo() {
 
-    // launch the browser (turn off headless)
+    // launch the browser
     const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
     // open a new page
     const page = await browser.newPage();
@@ -11,10 +11,11 @@ async function scrapeYoutubeVideo() {
     await page.setViewport({ width: 1280, height: 800 });
 
     // navigate to website link
-    const youtube_video_url = 'https://www.youtube.com/watch?v=jo_B4LTHi3I&ab_channel=InfoQ';
+    const youtube_video_url = 'https://www.youtube.com/watch?v=8aGhZQkoFbQ&t=257s&ab_channel=JSConf';
+    // 'https://www.youtube.com/watch?v=8TMuAVK2WBQ&t=1030s&ab_channel=PatrickLenk';
      console.log(`Navigating to ${youtube_video_url}...`);
     await page.goto(youtube_video_url, {waitUntil: 'domcontentloaded'});
-
+  
     // get the video title
     await page.waitForSelector('#title h1', {visible: true}); //('#title h1', {timeout : 30_000})
     let title = await page.$eval('#title h1', el =>  el.innerText);
@@ -34,16 +35,18 @@ async function scrapeYoutubeVideo() {
     await page.waitForSelector('#description-inner ytd-text-inline-expander yt-formatted-string span', {visible: true})
     let description = await page.$eval('#description-inner ytd-text-inline-expander yt-formatted-string span', el => el.innerText);
     console.log(`Video Description:\n${description}`);
-    sleep(5000); // wait for 5 seconds
+    //sleep(5000); // wait for 5 seconds
     
     // scroll down the page a couple of times
     let scrollCount = 0
-    scrollCount = await scrollPage(page, 6, scrollCount, 2000);
+    scrollCount = await scrollPage(page, 5, scrollCount, 2000);
 
     // get the total number of comments
     await page.waitForSelector('ytd-comments-header-renderer #title #count .count-text', {visible: true})
     let totalComments = await page.$eval('ytd-comments-header-renderer #title #count .count-text', el => {
-      return el.firstChild.innerText; });
+      return el.firstChild.innerText; 
+    });
+    totalComments = totalComments.replace(",","");  
     console.log(`Total Number of Comments: ${totalComments}`);
 
     // scroll down the page some more
@@ -60,11 +63,14 @@ async function scrapeYoutubeVideo() {
     // NOTE: Banned/hidden youtube comments usually contribute to the total comments count, but they
     // don't show up, so the total count is almost always an overstimate of how many actual comments are in view 
     let commentsFound = comments.length-1; // decreased by one to allow the loop to run
-    while ((comments.length < totalComments) && (commentsFound < comments.length)) {
+    //console.log(comments.length, totalComments, commentsFound, comments.length);
+    //console.log((comments.length < totalComments) && (commentsFound < comments.length));
+    while (comments.length < totalComments) {
       
       // estimate how much we need to scroll to get all the comments
       let needToScroll = Math.ceil((totalComments - comments.length) / totalComments) * scrollCount;   
-      console.log("Re-Scraping all the comments...");
+      console.log('Re-Scraping all the comments...');
+      console.log(`Estimated number of scrolls: ${needToScroll}`);
 
       // scroll only a small bit first to make sure that we're not at the end of the page
       scrollCount = await scrollPage(page, 0.1 * needToScroll, scrollCount, 2000);
@@ -72,18 +78,18 @@ async function scrapeYoutubeVideo() {
       console.log(`Number of comments found: ${comments.length}`);
       if(comments.length === commentsFound) {
         console.log("We've reached the end of the comments section!");
-        commentsFound = comments.length;
         break;
       }
 
-      scrollCount = await scrollPage(page, 0.9 * needToScroll, scrollCount, 2000);
+      scrollCount = await scrollPage(page, needToScroll, scrollCount, 2000);
       comments = await scrapeComments(page);
       commentsFound = comments.length;
       console.log(`Number of comments found: ${comments.length}`);
       sleep(2000); // wait for 2 seconds 
     }
+    console.log("Comment scraping completed.");
 
-
+    sleep(10000); // wait 10 seconds
     console.log(`Now scrolling back up..`);
     // scroll back to the top
     scrollCount = await scrollPage(page, -scrollCount, scrollCount, 0);
@@ -106,7 +112,9 @@ async function scrapeYoutubeVideo() {
       if(err) {
         console.error(`Failed to write data to file => ${err}`);
       }
-      console.log("Video data succesfully written to file.")
+      else {
+        console.log("Video data succesfully written to file.");
+      }
     })
 
     console.log('Done!')
@@ -133,6 +141,8 @@ async function scrollPage(page, n, count, delay) {
     await page.evaluate(sign => {
       window.scrollBy(0, sign*window.innerHeight);
     }, sign);
+    console.log(`Scroll# ${i}`);
+    clearLastLine();
     sleep(delay); // wait 
   }  
   console.log(`Scroll count = ${count+n}`);
@@ -155,4 +165,10 @@ async function scrapeComments(page) {
   });  
   return comments; 
 
+}
+
+
+const clearLastLine = () => {
+  process.stdout.moveCursor(0, -1) // up one line
+  process.stdout.clearLine(1) // from cursor to end
 }
