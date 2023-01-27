@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { kMaxLength } = require('buffer');
 
 async function scrapeYoutubeVideo() {
 
@@ -44,7 +45,8 @@ async function scrapeYoutubeVideo() {
     sleep(5000); // wait for 5 seconds
     
     // scroll down the page a couple of times
-    await scrollDown(page, 6);
+    let scrollCount = 0
+    scrollCount = await scrollPage(page, 6, scrollCount, 2000);
 
     // get the total number of comments
     await page.waitForSelector('ytd-comments-header-renderer #title #count .count-text', {visible: true})
@@ -52,22 +54,48 @@ async function scrapeYoutubeVideo() {
       return el.firstChild.innerText; });
     console.log(`Total Number of Comments: ${totalComments}`);
 
-     // scroll down the page some more
-     await scrollDown(page, 25);
+    // scroll down the page some more
+    scrollCount = await scrollPage(page, 10, scrollCount, 2000);
  
-    // get all the comments
+    // get some comments
     console.log("Scraping all the comments...");
     let comments = await scrapeComments(page);
     console.log(`Number of comments found: ${comments.length}`);
     // console.log(comments);
-    sleep(2000); // wait for 5 seconds 
+    sleep(2000); // wait for 2 seconds 
+
+    // if we haven't gotten all the comments yet, then scroll some more and get the remaining comments
+    // NOTE: Banned/hidden youtube comments usually contribute to the total comments count, but they
+    // don't show up, so the total count is almost always an overstimate of how many actual comments are in view 
+    let commentsFound = comments.length-1; // decreased by one to allow the loop to run
+    while ((comments.length < totalComments) && (commentsFound < comments.length)) {
+      
+      // estimate how much we need to scroll to get all the comments
+      let needToScroll = Math.ceil((totalComments - comments.length) / totalComments) * scrollCount;   
+      console.log("Re-Scraping all the comments...");
+
+      // scroll only a small bit first to make sure that we're not at the end of the page
+      scrollCount = await scrollPage(page, 0.1 * needToScroll, scrollCount, 2000);
+      comments = await scrapeComments(page);
+      console.log(`Number of comments found: ${comments.length}`);
+      if(comments.length === commentsFound) {
+        console.log("We've reached the end of the comments section!");
+        commentsFound = comments.length;
+        break;
+      }
+
+      scrollCount = await scrollPage(page, 0.9 * needToScroll, scrollCount, 2000);
+      comments = await scrapeComments(page);
+      commentsFound = comments.length;
+      console.log(`Number of comments found: ${comments.length}`);
+      sleep(2000); // wait for 2 seconds 
+    }
+
 
     console.log(`Now scrolling back up..`);
     // scroll back to the top
-    await page.evaluate(() => {
-      window.scrollBy(0, -15*window.innerHeight);
-    });
-    sleep(5000); 
+    scrollCount = await scrollPage(page, -scrollCount, scrollCount, 0);
+    sleep(2000); 
 
     // close the page
     await page.close();
@@ -103,15 +131,20 @@ function sleep(milliseconds) {
   } while (currentDate - date < milliseconds);
 }
 
-// this function scrolls down the page 'n' times
-async function scrollDown(page, n) {
-  console.log("Scrolling down the page..");
-  for(let i = 0; i < n; i++) {
-    await page.evaluate(() => {
-      window.scrollBy(0, window.innerHeight);
-    });
-    sleep(2000); // wait for 2 seconds  
+// this function scrolls the page 'n' times (n>0 for down, n<0 for up), delay between scrolls in ms
+async function scrollPage(page, n, count, delay) {
+  if(n === 0) return count;
+  console.log(`Scrolling the page ${n} times..`);
+  let sign = n / Math.abs(n);
+
+  for(let i = 0; i < Math.abs(n); i++) {
+    await page.evaluate(sign => {
+      window.scrollBy(0, sign*window.innerHeight);
+    }, sign);
+    sleep(delay); // wait 
   }  
+  console.log(`Scroll count = ${count+n}`);
+  return count += n;
 }
 
 // this function will scrape all the comments loaded within the current view window
@@ -122,8 +155,9 @@ async function scrapeComments(page) {
   let comments = await page.$$eval('#comments #sections #contents ytd-comment-renderer', links => {
     links = links.map(el => {
         let author = el.querySelector('#body #main #header #header-author h3').innerText;
+        let commentedWhen = el.querySelector('#body #main #header #header-author .published-time-text a').innerText;
         let comment = el.querySelector('#body #main #comment-content #expander #content #content-text').innerText;     
-        return {"author" : author, "comment" : comment};
+        return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment};
     }); 
     return links;
   });  
