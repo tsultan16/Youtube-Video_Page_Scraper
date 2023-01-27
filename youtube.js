@@ -1,19 +1,17 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const { kMaxLength } = require('buffer');
 
 async function scrapeYoutubeVideo() {
 
     // launch the browser (turn off headless)
-    const browser = await puppeteer.launch({headless: false, ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
     // open a new page
     const page = await browser.newPage();
     // set the page size
     await page.setViewport({ width: 1280, height: 800 });
 
     // navigate to website link
-    const youtube_video_url = 'https://www.youtube.com/watch?v=A7cupDNfccU&ab_channel=TomislavPeharec';
-    //'https://www.youtube.com/watch?v=BaNIlk2J_eI&list=PLUlRJwReoFrK0pvPoElzl3-Nt9twS2xHQ&index=128&ab_channel=ComedyCentral';
+    const youtube_video_url = 'https://www.youtube.com/watch?v=jo_B4LTHi3I&ab_channel=InfoQ';
  
     // navitage to the page
     console.log(`Navigating to ${youtube_video_url}...`);
@@ -144,7 +142,7 @@ async function scrollPage(page, n, count, delay) {
     sleep(delay); // wait 
   }  
   console.log(`Scroll count = ${count+n}`);
-  return count += n;
+  return Math.floor(count += n);
 }
 
 // this function will scrape all the comments loaded within the current view window
