@@ -12,23 +12,17 @@ async function scrapeYoutubeVideo() {
 
     // navigate to website link
     const youtube_video_url = 'https://www.youtube.com/watch?v=jo_B4LTHi3I&ab_channel=InfoQ';
- 
-    // navitage to the page
-    console.log(`Navigating to ${youtube_video_url}...`);
-    // const navigationPromise = page.waitForNavigation();
-    // await navigationPromise;
+     console.log(`Navigating to ${youtube_video_url}...`);
     await page.goto(youtube_video_url, {waitUntil: 'domcontentloaded'});
 
     // get the video title
     await page.waitForSelector('#title h1', {visible: true}); //('#title h1', {timeout : 30_000})
     let title = await page.$eval('#title h1', el =>  el.innerText);
     console.log(`Video Title: ${title}`);
-    //sleep(5000); // wait for 5 seconds
 
     // get the video description metadata
     await page.waitForSelector('tp-yt-paper-button#expand', {visible: true});
     await page.click('tp-yt-paper-button#expand');
-    //sleep(5000); // wait for 5 seconds
     
     // get video publish date
     await page.waitForSelector('#description-inner #info-container #info', {visible: true});
