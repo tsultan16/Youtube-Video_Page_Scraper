@@ -194,7 +194,7 @@ async function scrollPage(page, n, count, delay) {
       window.scrollBy(0, sign*window.innerHeight);
     }, sign);
     console.log(`Scroll# ${i}`);
-    clearLastLine();
+    //clearLastLine();
     sleep(delay); // wait 
   }  
   console.log(`Scroll count = ${count+n}`);
@@ -220,7 +220,7 @@ async function scrapeComments(page) {
 }
 
 
-const clearLastLine = () => {
-  process.stdout.moveCursor(0, -1) // up one line
-  process.stdout.clearLine(1) // from cursor to end
-}
+// const clearLastLine = () => {
+//   process.stdout.moveCursor(0, -1) // up one line
+//   process.stdout.clearLine(1) // from cursor to end
+// }
