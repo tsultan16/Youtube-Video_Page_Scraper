@@ -55,7 +55,7 @@ main();
 async function scrapeYoutubeVideo(url) {
 
     // launch the browser
-    const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({headless: false, ignoreHTTPSErrors: true});
     // open a new page
     const page = await browser.newPage();
     // set the page size
@@ -92,7 +92,7 @@ async function scrapeYoutubeVideo(url) {
     scrollCount = await scrollPage(page, 5, scrollCount, 2000);
 
     // get the total number of comments
-    await page.waitForSelector('ytd-comments-header-renderer #title #count .count-text', {visible: true})
+    await page.waitForSelector('ytd-comments-header-renderer #title #count .count-text');// , {visible: true});
     let totalComments = await page.$eval('ytd-comments-header-renderer #title #count .count-text', el => {
       return el.firstChild.innerText; 
     });
@@ -204,7 +204,7 @@ async function scrollPage(page, n, count, delay) {
 // this function will scrape all the comments loaded within the current view window
 async function scrapeComments(page) {
 
-  await page.waitForSelector('#comments #sections #contents', {visible: true});
+  await page.waitForSelector('#comments #sections #contents'); // , {visible: true});
   //get all the comments
   let comments = await page.$$eval('#comments #sections #contents ytd-comment-renderer', links => {
     links = links.map(el => {
