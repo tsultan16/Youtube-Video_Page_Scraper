@@ -55,7 +55,7 @@ main();
 async function scrapeYoutubeVideo(url) {
 
     // launch the browser
-    const browser = await puppeteer.launch({headless: false, ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
     // open a new page
     const page = await browser.newPage();
     // set the page size
