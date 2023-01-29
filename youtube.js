@@ -16,6 +16,11 @@ async function main() {
   app.use(express.json());
   app.use(express.urlencoded({ extended : true }));
 
+  // create http server and run it
+  http.createServer(app).listen(port, () => {
+    console.log(`Express server running on port ${port}...`)
+  });
+
   // Home page route
   app.get('/', (req, res) => {
     console.log("Get request to home page");
@@ -166,10 +171,6 @@ async function scrapeYoutubeVideo(url) {
     return videoData;
 }
 
-// create http server and run it
-http.createServer(app).listen(port,() => {
-  console.log(`Express server running on port ${port}...`)
-});
 
 
 
