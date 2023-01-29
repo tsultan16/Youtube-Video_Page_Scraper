@@ -3,7 +3,8 @@ const fs = require('fs');
 const http = require('http');
 const express = require('express');
 
-const port = 3000;
+const port = process.env.PORT || 3030; 
+
 const app = express();
 
 async function main() {
