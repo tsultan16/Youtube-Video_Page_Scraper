@@ -1,7 +1,52 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const http = require('http');
+const express = require('express');
 
-async function scrapeYoutubeVideo() {
+const port = 3000;
+const app = express();
+
+async function main() {
+
+    // middleware function for serving static html files
+  app.use(express.static(__dirname + '/public'));
+
+  // middleware function for extracting JSON post request body
+  app.use(express.json());
+  app.use(express.urlencoded({ extended : true }));
+
+  // Home page route
+  app.get('/', (req, res) => {
+    console.log("Get request to home page");
+    res.sendFile(__dirname + '/public/home.html');
+  });
+
+  // post scrape route
+  app.post('/scrape', async (req, res) => {
+    let data = req.body;
+    console.log("Recieved scrape request from user.");
+    console.log(`Video url: ${data.url}`);
+    console.log(`Publish date: ${data.publishDate}`);
+    console.log(`Video description: ${data.description}`);
+    console.log(`Comments: ${data.comments}`); 
+
+    // start scraping
+    let videoData = await scrapeYoutubeVideo(data.url);
+
+    // send scraped data back to client
+    console.log(`Sending scraped data back to client.`)
+    res.status(201);
+    res.json(videoData)
+    //res.json({"message" : "Post request success!"});
+
+  });
+
+};
+
+main();
+///////////////////////////////////////////////////////////////////////////////////////
+
+async function scrapeYoutubeVideo(url) {
 
     // launch the browser
     const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
@@ -11,9 +56,8 @@ async function scrapeYoutubeVideo() {
     await page.setViewport({ width: 1280, height: 800 });
 
     // navigate to website link
-    const youtube_video_url = 'https://www.youtube.com/watch?v=8aGhZQkoFbQ&t=257s&ab_channel=JSConf';
-    // 'https://www.youtube.com/watch?v=8TMuAVK2WBQ&t=1030s&ab_channel=PatrickLenk';
-     console.log(`Navigating to ${youtube_video_url}...`);
+    const youtube_video_url = url;
+    console.log(`Navigating to ${youtube_video_url}...`);
     await page.goto(youtube_video_url, {waitUntil: 'domcontentloaded'});
   
     // get the video title
@@ -28,7 +72,7 @@ async function scrapeYoutubeVideo() {
     // get video publish date
     await page.waitForSelector('#description-inner #info-container #info', {visible: true});
     let publishDate = await page.$eval('#description-inner #info-container #info', el => {
-        return el.lastChild.innerText;         
+        return el.firstChild.nextSibling.nextSibling.innerText;         
     }); 
     console.log(`Video Publish Date: ${publishDate}`);
 
@@ -101,26 +145,32 @@ async function scrapeYoutubeVideo() {
     await browser.close();
 
     // save video data in file
-    filename = title + ".JSON"
+    filename = "scraped_data.JSON"; //title + ".JSON";
     let videoData = {};
     videoData['title'] = title;
     videoData['publishDate'] = publishDate;
     videoData['description'] = description;
     videoData['comments'] = comments;
     
-    fs.writeFile(filename, JSON.stringify(videoData), err => {
-      if(err) {
-        console.error(`Failed to write data to file => ${err}`);
-      }
-      else {
-        console.log("Video data succesfully written to file.");
-      }
-    })
+    // fs.writeFile(filename, JSON.stringify(videoData), err => {
+    //   if(err) {
+    //     console.error(`Failed to write data to file => ${err}`);
+    //   }
+    //   else {
+    //     console.log("Video data succesfully written to file.");
+    //   }
+    // });
 
-    console.log('Done!')
+    console.log('Done scraping!')
+    return videoData;
 }
 
-scrapeYoutubeVideo();
+// create http server and run it
+http.createServer(app).listen(port,() => {
+  console.log(`Express server running on port ${port}...`)
+});
+
+
 
 // a basic sleep function
 function sleep(milliseconds) {

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body{
+                background-color: black;
+            }
+
+            main {
+                display: flex;
+                border: 2px solid black;
+            }            
+            .col.col1 {
+                flex : 1 1 15%;
+                background-color: aquamarine;
+            }
+            .col.col2{
+                flex: 1 1 40%; 
+                background-color: salmon;
+            }
+            .col.col3{
+                flex: 1 1 45%;
+                background-color: blueviolet;
+            }
+            .col.col2 p{
+                color: slategray;
+            }
+
+            .headerBar{
+                list-style: none;
+                display: flex;
+                align-items: center;
+                margin: 0;
+                padding: 0;
+                background-color: black;
+            }
+            .headerBar .logo{
+                margin-right: auto;
+            }
+            .headerBar .logo a img{
+                height: 50px;
+                width: 50px;
+                padding: 10px;
+            }
+            
+            .headerBar .link{
+                /* background-color: rgba(0, 0, 0, 0.562); */
+                background-color: black;
+            }
+
+            .headerBar .link a{
+                text-decoration: none;
+                color: whitesmoke;
+                padding: 0em 0.75em;
+                transition-duration: 0.4s;
+            }
+            
+            .headerBar .link a:hover{
+                /*background-color: rgba(0, 65, 65, 0.621); */
+                color: rgba(39, 214, 214, 0.68);
+            }
+
+            footer {
+                display: flex;
+                border: 2px solid black;
+                background-color: rgb(47, 64, 75)
+            }   
+
+            footer p{
+                color: whitesmoke;
+            }
+
+            .input {
+                display: flex;
+            }
+            .input #url {
+                flex : 1 1 75%;
+                margin: 0.5em;
+                padding: 0.75em;
+                border-radius: 6px;
+                transition-duration: 0.4s;
+                background-color: white;
+            }
+            .input #url:hover {
+                border: 5px solid green;
+            }
+            .input #submit {
+                flex : 1 1 25%;
+                margin: 0.5em;
+                padding: 0.75em;
+                border-radius: 8px;
+                background-color: rgb(53, 198, 184);
+                color: white;
+                transition-duration: 0.4s;
+            }
+            .input #submit:hover {
+                background-color: rgba(145, 227, 187, 0.968);
+            }
+            
+
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <ul class="headerBar">
+                <li class="logo"><a href="#"><img src="./images/logo.png" alt="shieldLogo"></a></li>
+                <li class="link"><a href="#">Home</a></li>
+                <li class="link"><a href="#">About</a></li>
+                <li class="link"><a href="#">Blog</a></li>
+                <li class="link"><a href="#">Contact</a></li>
+            </ul>
+        </header>
+
+        <main>
+            <div class="col col1">
+                <p> 
+                    Use this free app to scrape any youtube video. Select the kind of data
+                    that you want to scrape from the video:
+                </p>
+                <div class="checkboxes">
+                    <div>
+                        <input type="checkbox" id="publishDate" value="publishDate">
+                        <label>Publish date</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="description" value="description">
+                        <label>Video description</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="comments" value="comments">
+                        <label>Comments</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col col2">
+                <h2>Youtube Video Scraper</h2>
+                <div class="input">
+                    <input type="text" id="url" placeholder="Enter the video URL">
+                    <button id="submit">Submit</button> 
+                </div>    
+            </div> 
+            <div class="col col3">
+                <h2>Scrapped Data:</h2>
+                <div id="scrapped_data">
+
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>The small print. </p>
+        </footer>
+
+        <script src="./javascripts/client.js"></script>
+    </body>
+</html>
