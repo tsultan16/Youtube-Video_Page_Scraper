@@ -71,6 +71,11 @@ async function scrapeYoutubeVideo(url) {
     let title = await page.$eval('#title h1', el =>  el.innerText);
     console.log(`Video Title: ${title}`);
 
+    // get channel name
+    await page.waitForSelector('#upload-info #channel-name #container #text-container #text');
+    let channelName = await page.$eval('#upload-info #channel-name #container #text-container #text', el => el.innerText);
+    console.log(`Channel Name: ${channelName}`);
+
     // get the video description metadata
     await page.waitForSelector('tp-yt-paper-button#expand', {visible: true});
     await page.click('tp-yt-paper-button#expand');
@@ -160,6 +165,7 @@ async function scrapeYoutubeVideo(url) {
     filename = "scraped_data.JSON"; //title + ".JSON";
     let videoData = {};
     videoData['title'] = title;
+    videoData['channelName'] = channelName;
     videoData['publishDate'] = publishDate;
     videoData['description'] = description;
     videoData['comments'] = comments;
@@ -212,7 +218,7 @@ async function scrapeComments(page) {
 
   await page.waitForSelector('#comments #sections #contents'); // , {visible: true});
   //get all the comments
-  let comments = await page.$$eval('#comments #sections #contents ytd-comment-renderer', links => {
+  let comments = await page.$$eval('#comments #sections #contents #comment', links => {
     links = links.map(el => {
         let author = el.querySelector('#body #main #header #header-author h3').innerText;
         let commentedWhen = el.querySelector('#body #main #header #header-author .published-time-text a').innerText;

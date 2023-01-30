@@ -59,6 +59,10 @@ function submitURL () {
         let vidTitle = document.createElement('h4');
         vidTitle.innerText = res_data.title;
         data_section.appendChild(vidTitle);
+        
+        let vidChannel = document.createElement('p');
+        vidChannel.innerText = "Channel Name: " + res_data.channelName;
+        data_section.appendChild(vidChannel);
 
         if(publishDate){
             let vidPublishDate = document.createElement('p');
