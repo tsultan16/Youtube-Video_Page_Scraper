@@ -238,13 +238,14 @@ async function scrapeComments(page) {
               author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
             }
             let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
+            let commentLikes = el.querySelector('#comment #body #main #action-buttons #toolbar #vote-count-middle').innerText;
             let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;     
             let hasReplies = (el.querySelector('#replies').innerHTML !== "");
             if(hasReplies){
                 el.querySelector('#replies #more-replies button').click();
                 //await page.waitForSelector('#replies #expander #expander-contents #contents ytd-comment-renderer #body #main'); 
             }
-            return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies};
+            return {"author" : author, "commentedWhen": commentedWhen, "commentLikes" : commentLikes, "comment" : comment, "hasReplies" : hasReplies};
         }); 
         return links;
     });  
@@ -268,6 +269,7 @@ async function scrapeComments(page) {
                   author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
                 }
                 let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
+                let commentLikes = el.querySelector('#comment #body #main #action-buttons #toolbar #vote-count-middle').innerText;
                 let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;
                 let hasReplies = (el.querySelector('#replies').innerHTML !== "");
                 let replies = [];
@@ -285,13 +287,14 @@ async function scrapeComments(page) {
                         }
                         // get reply date
                         let replyWhen = reply.querySelector('#header #header-author .published-time-text a').innerText;
+                        let replyLikes = reply.querySelector('#action-buttons #toolbar #vote-count-middle').innerText;
                         // get reply comment
                         let replyComment = reply.querySelector('#comment-content #expander #content #content-text').innerText;
-                        replies.push({"replyAuthor" : replyAuthor, "replyWhen" : replyWhen, "replyComment" : replyComment}) ;
+                        replies.push({"replyAuthor" : replyAuthor, "replyWhen" : replyWhen, "replyLikes" : replyLikes, "replyComment" : replyComment}) ;
                     }
                 }
                      
-                return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies, "replies" : replies};
+                return {"author" : author, "commentedWhen": commentedWhen, "commentLikes" : commentLikes, "comment" : comment, "hasReplies" : hasReplies, "replies" : replies};
             }); 
             return links;
         });  
@@ -301,7 +304,7 @@ async function scrapeComments(page) {
     for (comment of commentReplyArray) {
         console.log("Replies: ");
         for (reply of comment.replies) {
-          console.log(`${reply.replyAuthor}, ${reply.replyWhen}, ${reply.replyComment}`);
+          console.log(`${reply.replyAuthor}, ${reply.replyWhen}, ${reply.replyLikes}, ${reply.replyComment}`);
         }
     }
 

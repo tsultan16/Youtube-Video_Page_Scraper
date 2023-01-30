@@ -77,13 +77,13 @@ function submitURL () {
         }
         
         if (comments) {
-            let vidComment = document.createElement('h6');
+            let vidComment = document.createElement('h4');
             vidComment.innerText = "Comments:";
             data_section.appendChild(vidComment);
     
             for(comment of res_data.comments){
                 let vidComment = document.createElement('p');
-                vidComment.innerText = "\nAuthor: " + comment.author + ", commented when: " + comment.commentedWhen + ", has replies: " + comment.hasReplies + "\nComment:\n" + comment.comment + "\n\n" + "Replies: ";
+                vidComment.innerText = "\nComment Author: " + comment.author + ", commented when: " + comment.commentedWhen + ", Likes: " + comment.commentLikes + ", has replies: " + comment.hasReplies + "\nComment:\n" + comment.comment + "\n\n" + "Replies: ";
                 data_section.appendChild(vidComment);
 
                 if (comment.replies.length === 0) {
@@ -94,7 +94,7 @@ function submitURL () {
 
                 for(reply of comment.replies) {
                     let replyComment = document.createElement('p');
-                    replyComment.innerText = "\nAuthor: " + reply.replyAuthor + ", replied when: " + reply.replyWhen + "\n" + reply.replyComment;
+                    replyComment.innerText = "\nReply Author: " + reply.replyAuthor + ", replied when: " + reply.replyWhen + ", Likes: " + reply.replyLikes + "\n" + reply.replyComment;
                     data_section.appendChild(replyComment);
                 }
             }        
