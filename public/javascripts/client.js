@@ -83,8 +83,20 @@ function submitURL () {
     
             for(comment of res_data.comments){
                 let vidComment = document.createElement('p');
-                vidComment.innerText = "\nAuthor: " + comment.author + ", commented when: " + comment.commentedWhen + ", has replies: " + comment.hasReplies + "\n" + comment.comment;
+                vidComment.innerText = "\nAuthor: " + comment.author + ", commented when: " + comment.commentedWhen + ", has replies: " + comment.hasReplies + "\nComment:\n" + comment.comment + "\n\n" + "Replies: ";
                 data_section.appendChild(vidComment);
+
+                if (comment.replies.length === 0) {
+                    let replyComment = document.createElement('p');
+                    replyComment.innerText = "NO REPLIES!!";
+                    data_section.appendChild(replyComment);  
+                }
+
+                for(reply of comment.replies) {
+                    let replyComment = document.createElement('p');
+                    replyComment.innerText = "\nAuthor: " + reply.replyAuthor + ", replied when: " + reply.replyWhen + "\n" + reply.replyComment;
+                    data_section.appendChild(replyComment);
+                }
             }        
         }
    

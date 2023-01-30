@@ -4,8 +4,8 @@ const http = require('http');
 const express = require('express');
 
 const port = 3000; //process.env.PORT || 3030; 
-
 const app = express();
+const headlessBrowser = true;
 
 async function main() {
 
@@ -55,7 +55,7 @@ main();
 async function scrapeYoutubeVideo(url) {
 
     // launch the browser
-    const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({headless: headlessBrowser, ignoreHTTPSErrors: true});
     // open a new page
     const page = await browser.newPage();
     // set the page size
@@ -77,7 +77,7 @@ async function scrapeYoutubeVideo(url) {
     console.log(`Channel Name: ${channelName}`);
 
     // get the video description metadata
-    await page.waitForSelector('tp-yt-paper-button#expand', {visible: true});
+    await page.waitForSelector('tp-yt-paper-button#expand'); //, {visible: true});
     await page.click('tp-yt-paper-button#expand');
     
     // get video publish date
@@ -111,8 +111,12 @@ async function scrapeYoutubeVideo(url) {
     console.log(`Total Number of Comments: ${totalComments}`);
 
     // scroll down the page some more
-    scrollCount = await scrollPage(page, 10, scrollCount, 2000);
- 
+    scrollCount = await scrollPage(page, 5, scrollCount, 2000);
+    // scroll back up
+    let tempCount = scrollCount
+    scrollCount = await scrollPage(page, -scrollCount+5, scrollCount, 0);
+    scrollCount = tempCount+5;
+
     // get some comments
     console.log("Scraping all the comments...");
     let comments = await scrapeComments(page);
@@ -135,6 +139,10 @@ async function scrapeYoutubeVideo(url) {
 
       // scroll only a small bit first to make sure that we're not at the end of the page
       scrollCount = await scrollPage(page, 0.1 * needToScroll, scrollCount, 2000);
+      // scroll back up
+      let tempCount = scrollCount
+      scrollCount = await scrollPage(page, -scrollCount, scrollCount, 0);
+      scrollCount = tempCount;
       comments = await scrapeComments(page);
       console.log(`Number of comments found: ${comments.length}`);
       if(comments.length === commentsFound) {
@@ -143,6 +151,10 @@ async function scrapeYoutubeVideo(url) {
       }
 
       scrollCount = await scrollPage(page, needToScroll, scrollCount, 2000);
+      // scroll back up
+      tempCount = scrollCount
+      scrollCount = await scrollPage(page, -scrollCount, scrollCount, 0);
+      scrollCount = tempCount;
       comments = await scrapeComments(page);
       commentsFound = comments.length;
       console.log(`Number of comments found: ${comments.length}`);
@@ -184,62 +196,120 @@ async function scrapeYoutubeVideo(url) {
 }
 
 
-
-
 // a basic sleep function
 function sleep(milliseconds) {
-  const date = Date.now();
-  let currentDate = null;
-  do {
-    currentDate = Date.now();
-  } while (currentDate - date < milliseconds);
+    const date = Date.now();
+    let currentDate = null;
+    do {
+        currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
 }
 
 // this function scrolls the page 'n' times (n>0 for down, n<0 for up), delay between scrolls in ms
 async function scrollPage(page, n, count, delay) {
-  if(n === 0) return count;
-  console.log(`Scrolling the page ${n} times..`);
-  let sign = n / Math.abs(n);
+    if(n === 0) return count;
+    console.log(`Scrolling the page ${n} times..`);
+    let sign = n / Math.abs(n);
 
-  for(let i = 0; i < Math.abs(n); i++) {
-    if (i > 0) clearLastLine();
-    await page.evaluate(sign => {
-      window.scrollBy(0, sign*window.innerHeight);
-    }, sign);
-    console.log(`Scroll# ${i}`);
-    sleep(delay); // wait 
-  }  
-  console.log(`Scroll count = ${count+n}`);
-  return Math.floor(count += n);
+    for(let i = 0; i < Math.abs(n); i++) {
+        if (i > 0) clearLastLine();
+        await page.evaluate(sign => {
+          window.scrollBy(0, sign*window.innerHeight);
+        }, sign);
+        console.log(`Scroll# ${i}`);
+        sleep(delay); // wait 
+    }  
+    console.log(`Scroll count = ${count+n}`);
+    return Math.floor(count += n);
 }
 
 // this function will scrape all the comments loaded within the current view window
 async function scrapeComments(page) {
 
-  await page.waitForSelector('#comments #sections #contents'); // , {visible: true});
-  //get all the comments
-  let comments = await page.$$eval('#comments #sections #contents ytd-comment-thread-renderer', links => {
-    links = links.map(el => {
-        let hasReplies = (el.querySelector('#replies').innerHTML !== "");
-        let author = "";
-        if(el.querySelector('#comment #body #main #header #header-author #author-comment-badge').innerHTML !== ""){
-          author = el.querySelector('#comment #body #main #header #header-author #author-comment-badge ytd-author-comment-badge-renderer #name #channel-name #container #text-container #text').innerText;
-        }
-        else {
-          author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
-        }
-        let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
-        let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;     
-        return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies};
-    }); 
-    return links;
-  });  
-  return comments; 
+    //get all the comments
+    await page.waitForSelector('#comments #sections #contents'); // , {visible: true});
+    let comments = await page.$$eval('#comments #sections #contents ytd-comment-thread-renderer', (links) => {
+        links = links.map(el => {
+            let author = "";
+            if(el.querySelector('#comment #body #main #header #header-author #author-comment-badge').innerHTML !== ""){
+              author = el.querySelector('#comment #body #main #header #header-author #author-comment-badge ytd-author-comment-badge-renderer #name #channel-name #container #text-container #text').innerText;
+            }
+            else {
+              author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
+            }
+            let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
+            let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;     
+            let hasReplies = (el.querySelector('#replies').innerHTML !== "");
+            if(hasReplies){
+                el.querySelector('#replies #more-replies button').click();
+                //await page.waitForSelector('#replies #expander #expander-contents #contents ytd-comment-renderer #body #main'); 
+            }
+            return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies};
+        }); 
+        return links;
+    });  
 
+    sleep(5000); // wait 5 seconds 
+
+    // check if any comment haves replies, then get the replies
+    if(comments.filter(comment => comment.hasReplies === true).length > 0) {
+        console.log(`Found ${comments.filter(comment => comment.hasReplies === true).length} comment(s) with replies!`);
+       //await page.waitForSelector('#comments #sections #contents'); // to make sure all replies are loaded
+        await page.waitForSelector('#comments #sections #contents ytd-comment-thread-renderer #replies #expander #expander-contents #contents ytd-comment-renderer #body #main', {timeout: 600000}); // to make sure all replies are loaded
+        //await page.waitForSelector('#comments #sections #contents #contents ytd-comment-thread-renderer #replies #expander #expander-contents #contents ytd-comment-renderer #body #main'); // to make sure all replies are loaded
+        //get all the comments and replies
+        comments = await page.$$eval('#comments #sections #contents ytd-comment-thread-renderer', links => {
+            links = links.map(el => {
+                let author = "";
+                if(el.querySelector('#comment #body #main #header #header-author #author-comment-badge').innerHTML !== ""){
+                  author = el.querySelector('#comment #body #main #header #header-author #author-comment-badge ytd-author-comment-badge-renderer #name #channel-name #container #text-container #text').innerText;
+                }
+                else {
+                  author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
+                }
+                let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
+                let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;
+                let hasReplies = (el.querySelector('#replies').innerHTML !== "");
+                let replies = [];
+                if(hasReplies){
+                    // get all the replies
+                    let allReplies = el.querySelectorAll('#replies #expander #expander-contents #contents ytd-comment-renderer #body #main');
+                    for (reply of allReplies) {
+                        // get reply author name 
+                        let replyAuthor = "";
+                        if(reply.querySelector('#header #header-author #author-comment-badge').innerHTML !== ""){
+                          replyAuthor = reply.querySelector('#header #header-author #author-comment-badge ytd-author-comment-badge-renderer #name #channel-name #container #text-container #text').innerText;
+                        }
+                        else {
+                          replyAuthor = reply.querySelector('#header #header-author h3').innerText;
+                        }
+                        // get reply date
+                        let replyWhen = reply.querySelector('#header #header-author .published-time-text a').innerText;
+                        // get reply comment
+                        let replyComment = reply.querySelector('#comment-content #expander #content #content-text').innerText;
+                        replies.push({"replyAuthor" : replyAuthor, "replyWhen" : replyWhen, "replyComment" : replyComment}) ;
+                    }
+                }
+                     
+                return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies, "replies" : replies};
+            }); 
+            return links;
+        });  
+    }
+
+    let commentReplyArray = comments.filter(comment => comment.hasReplies === true);
+    for (comment of commentReplyArray) {
+        console.log("Replies: ");
+        for (reply of comment.replies) {
+          console.log(`${reply.replyAuthor}, ${reply.replyWhen}, ${reply.replyComment}`);
+        }
+    }
+
+    return comments; 
 }
 
 
 const clearLastLine = () => {
-  process.stdout.moveCursor(0, -1) // up one line
-  process.stdout.clearLine(1) // from cursor to end
+    process.stdout.moveCursor(0, -1) // up one line
+    process.stdout.clearLine(1) // from cursor to end
 }
