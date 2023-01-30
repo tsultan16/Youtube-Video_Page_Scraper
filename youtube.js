@@ -3,7 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const express = require('express');
 
-const port = process.env.PORT || 3030; 
+const port = 3000; //process.env.PORT || 3030; 
 
 const app = express();
 
@@ -82,8 +82,14 @@ async function scrapeYoutubeVideo(url) {
     }); 
     console.log(`Video Publish Date: ${publishDate}`);
 
-    await page.waitForSelector('#description-inner ytd-text-inline-expander yt-formatted-string span', {visible: true})
-    let description = await page.$eval('#description-inner ytd-text-inline-expander yt-formatted-string span', el => el.innerText);
+    await page.waitForSelector('#description-inner ytd-text-inline-expander yt-formatted-string', {visible: true})
+    let description = await page.$eval('#description-inner ytd-text-inline-expander yt-formatted-string', el => {
+      let des = "";
+      for (item of el.childNodes) {
+        if(item.innerText !== "" || item.innerText !== " ") des += item.innerText;
+      }
+      return des;
+    });
     console.log(`Video Description:\n${description}`);
     //sleep(5000); // wait for 5 seconds
     
@@ -190,11 +196,11 @@ async function scrollPage(page, n, count, delay) {
   let sign = n / Math.abs(n);
 
   for(let i = 0; i < Math.abs(n); i++) {
+    if (i > 0) clearLastLine();
     await page.evaluate(sign => {
       window.scrollBy(0, sign*window.innerHeight);
     }, sign);
     console.log(`Scroll# ${i}`);
-    //clearLastLine();
     sleep(delay); // wait 
   }  
   console.log(`Scroll count = ${count+n}`);
@@ -220,7 +226,7 @@ async function scrapeComments(page) {
 }
 
 
-// const clearLastLine = () => {
-//   process.stdout.moveCursor(0, -1) // up one line
-//   process.stdout.clearLine(1) // from cursor to end
-// }
+const clearLastLine = () => {
+  process.stdout.moveCursor(0, -1) // up one line
+  process.stdout.clearLine(1) // from cursor to end
+}
