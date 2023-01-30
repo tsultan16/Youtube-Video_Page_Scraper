@@ -150,11 +150,11 @@ async function scrapeYoutubeVideo(url) {
     }
     console.log("Comment scraping completed.");
 
-    sleep(10000); // wait 10 seconds
+    sleep(1000); // wait 1 second
     console.log(`Now scrolling back up..`);
     // scroll back to the top
     scrollCount = await scrollPage(page, -scrollCount, scrollCount, 0);
-    sleep(2000); 
+    sleep(2000); // wait 2 seconds 
 
     // close the page
     await page.close();
@@ -218,12 +218,19 @@ async function scrapeComments(page) {
 
   await page.waitForSelector('#comments #sections #contents'); // , {visible: true});
   //get all the comments
-  let comments = await page.$$eval('#comments #sections #contents #comment', links => {
+  let comments = await page.$$eval('#comments #sections #contents ytd-comment-thread-renderer', links => {
     links = links.map(el => {
-        let author = el.querySelector('#body #main #header #header-author h3').innerText;
-        let commentedWhen = el.querySelector('#body #main #header #header-author .published-time-text a').innerText;
-        let comment = el.querySelector('#body #main #comment-content #expander #content #content-text').innerText;     
-        return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment};
+        let hasReplies = (el.querySelector('#replies').innerHTML !== "");
+        let author = "";
+        if(el.querySelector('#comment #body #main #header #header-author #author-comment-badge').innerHTML !== ""){
+          author = el.querySelector('#comment #body #main #header #header-author #author-comment-badge ytd-author-comment-badge-renderer #name #channel-name #container #text-container #text').innerText;
+        }
+        else {
+          author = el.querySelector('#comment #body #main #header #header-author h3').innerText;
+        }
+        let commentedWhen = el.querySelector('#comment #body #main #header #header-author .published-time-text a').innerText;
+        let comment = el.querySelector('#comment #body #main #comment-content #expander #content #content-text').innerText;     
+        return {"author" : author, "commentedWhen": commentedWhen, "comment" : comment, "hasReplies" : hasReplies};
     }); 
     return links;
   });  
